@@ -9,7 +9,7 @@ npm run start
 ```
 
 ## Client
-- This is the part that mimicks 3ed party like Medium or TapaTalk
+- This is the part mimicks 3ed party like Medium or TapaTalk
 ```
 cd web/client
 npm i
