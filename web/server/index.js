@@ -4,6 +4,7 @@ const io = require('socket.io').listen(81);
 io.sockets.on('connection', function (socket) {
   // Register 'join' events, requested by a connected socket
   console.log(`Clien ${socket.id} has connected`)
+  io.sockets.in(room).emit('connection', true);
 
   socket.on('join', function (room) {
     // join channel provided by socket

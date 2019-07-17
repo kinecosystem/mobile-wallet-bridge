@@ -18,9 +18,13 @@
         <h1 class="jumbotron-heading">Tip With Kin Example</h1>
         <p class="lead text-muted">Imagin this is Medium or TapTalk</p>
         <p>
-          <a href="#" class="btn btn-success" id="join">Join</a>
+          <a href="#" class="btn btn-success" id="create">Create Random Room</a>
           <a href="#" class="btn btn-success" id="send-ping">Send Ping</a>
         </p>
+        <p>
+          <a href="#" class="btn btn-success" id="join-room-id">Connect Specific Room</a>
+        </p>
+        <input type="text" id="room-id">
       </div>
     </section>
     <section>
@@ -31,10 +35,9 @@
     </section>
   </main>
   <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
-  <script src="http://wzrd.in/standalone/uuid%2Fv4@latest"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.dev.js"
     integrity="sha256-i2Orhi397HWPn93rsCUTW8HBoso65vY/VNTllm9Kuqo=" crossorigin="anonymous"></script>
-  <script src="./js/plugin.js"></script>
+  <script src="./js/bundle.js"></script>
 </body>
 
 </html>
