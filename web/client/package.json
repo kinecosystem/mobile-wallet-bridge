@@ -4,7 +4,7 @@
   "description": "cross device com. poc.",
   "main": "index.html",
   "scripts": {
-    "pack-dev": "webpack -d --watch --progress"
+    "start": "webpack -d --watch --progress"
   },
   "license": "ISC",
   "devDependencies": {
