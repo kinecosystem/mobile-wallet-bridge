@@ -1,5 +1,3 @@
-import { stringify } from "querystring";
-
 declare var io: SocketIOClientStatic
 const QRCode = require('qrcode');
 const UUID = require('uuid/v4');
@@ -28,12 +26,10 @@ const SOCKET_PORT = 80;
     let room_uuid = UUID();
     joinRoomTxtField.value = room_uuid;
     let qr_data = {
-      'url': SOCKET_URL,
-      'port': SOCKET_PORT,
-      'room': room_uuid,
-      'direct_url': SOCKET_URL + '/#ruid=' + room_uuid
+      'url': `ws://${window.location.hostname}:${SOCKET_PORT}/socket.io/?EIO=3&transport=websocket`,
+      'room': room_uuid
     };
-    QRCode.toCanvas(room_uuid, { errorCorrectionLevel: 'H', version: 13 }, function (err: any, canvas: HTMLCanvasElement) {
+    QRCode.toCanvas(JSON.stringify(qr_data), { errorCorrectionLevel: 'M', version: 5 }, function (err: any, canvas: HTMLCanvasElement) {
       if (err) throw err
       var container = document.getElementById('qr-code')
       container.innerHTML = '';
