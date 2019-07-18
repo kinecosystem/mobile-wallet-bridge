@@ -47,8 +47,10 @@ export class WebSocketServer {
 
   private onMessage(webSocket: WebSocket, data: string): void {
     console.log('[server](message): %s', data);
-    // broadcasting to every other connected WebSocket clients, excluding itself.
-    for (let client of this.wss.clients) {
+    // broadcast incoming message to the client room or to everyone if yet to join
+    for (let client of <any>this.wss.clients) {
+      console.log(`cleint found: ${client.id}`);
+
       if (client.readyState === WebSocket.OPEN) {
         client.send(`Broadcasting incoming message: ${data}`);
       }
