@@ -27,7 +27,7 @@ const SOCKET_PORT = 8080;
     let room_uuid = UUID();
     joinRoomTxtField.value = room_uuid;
     let qr_data = {
-      'url': `ws://${window.location.hostname}:${SOCKET_PORT}/socket.io/?EIO=3&transport=websocket`,
+      'ws': `ws://${window.location.hostname}:${SOCKET_PORT}`,
       'room': room_uuid
     };
     QRCode.toCanvas(JSON.stringify(qr_data), {
