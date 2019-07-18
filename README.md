@@ -4,11 +4,17 @@
 ## Server
 - Backend with WebSocket
 ```
-
+cd server
+npm install
+npm run build
+npm run start
 ```
 
 ## Client
 - This is the part mimicks 3ed party like Medium or TapaTalk
 ```
-
+cd client
+npm install
+npm run build
+npm run start
 ```
