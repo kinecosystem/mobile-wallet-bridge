@@ -1,4 +1,4 @@
 import { WebSocketServer } from './server';
 
-let server = new WebSocketServer().getServer();
-export { server };
+let app = new WebSocketServer().getApp();
+export { app };

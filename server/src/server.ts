@@ -1,35 +1,48 @@
 import * as WebSocket from 'ws'
+import * as express from 'express';
 import * as http from 'http';
+import * as net from 'net';
 import { User } from './model'
 
 export class WebSocketServer {
-  public static readonly PORT: number = 3000;
-  private server: WebSocket.Server;
+  public static readonly PORT: number = 8080;
+  private app: express.Application;
+  private server: http.Server;
+  private wss: WebSocket.Server;
   private options: WebSocket.ServerOptions;
   private rooms: Object;
 
   constructor() {
-    this.config();
+    this.createApp();
     this.createServer();
+    this.config();
+    this.sockets();
     this.listen();
+  }
+  private createApp(): void {
+    this.app = express();
   }
 
   private createServer(): void {
-    this.server = new WebSocket.Server(this.options);
+    this.server = http.createServer(this.app);
+  }
+
+  private sockets(): void {
+    this.wss = new WebSocket.Server({ server: this.options.server });
     this.rooms = {};
-    console.log('Running WebSocket server on port %s', this.options.port);
   }
 
   private config(): void {
     this.options = {
-      port: Number(process.env.PORT) || WebSocketServer.PORT
+      port: Number(process.env.PORT) || WebSocketServer.PORT,
+      server: this.server
     };
   }
 
   private onMessage(webSocket: WebSocket, data: WebSocket.Data): void {
     console.log('[server](message): %s', JSON.stringify(data));
     // broadcasting to every other connected WebSocket clients, excluding itself.
-    this.server.clients.forEach((client) => {
+    this.wss.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(`Broadcasting incoming message: ${data}`);
       }
@@ -69,11 +82,22 @@ export class WebSocketServer {
     webSocket.on('close', (webSocket: WebSocket, code: number, reason: string) => this.onClose(webSocket, code, reason));
   }
 
-  private listen(): void {
-    this.server.on('connection', (webSocket: WebSocket, req: http.IncomingMessage) => this.onConnection(webSocket, req));
+  private onUpgrade(request: http.IncomingMessage, socket: net.Socket, upgradeHead: Buffer) {
+    this.wss.handleUpgrade(request, socket, upgradeHead, ws => {
+      this.wss.emit('connection', ws, request);
+    });
   }
 
-  public getServer(): WebSocket.Server {
-    return this.server;
+  private listen(): void {
+    this.server.listen(this.options.port, () => {
+      console.log('Running HTTP Server on port %s', this.options.port);
+      console.log('Running WebSocket Server on port %s', this.options.port);
+    });
+    this.wss.on('upgrade', (request, socket, head) => { this.onUpgrade(request, socket, head) });
+    this.wss.on('connection', (webSocket: WebSocket, req: http.IncomingMessage) => this.onConnection(webSocket, req));
+  }
+
+  public getApp(): express.Application {
+    return this.app;
   }
 }
