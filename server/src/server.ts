@@ -39,23 +39,15 @@ export class WebSocketServer {
     };
   }
 
-  private switch(webSocket: WebSocket, data: Object) {
+  private switch(webSocket: any, data: Object) {
     if (data['join'] !== undefined) {
       this.joinRoom(webSocket, data['join']);
+      webSocket.room = data['join'];
     }
   }
 
-  private onMessage(webSocket: WebSocket, data: string): void {
+  private onMessage(webSocket: any, data: string): void {
     console.log('[server](message): %s', data);
-    // broadcast incoming message to the client room or to everyone if yet to join
-    for (let client of <any>this.wss.clients) {
-      console.log(`cleint found: ${client.id}`);
-
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(`Broadcasting incoming message: ${data}`);
-      }
-    }
-
     // parse data
     try {
       let jsonData = JSON.parse(data);
@@ -64,6 +56,16 @@ export class WebSocketServer {
       let err = `Unexpected message "${data}", Expecting a valid JSON`;
       console.log(err + '\n' + e);
       webSocket.send(err);
+    }
+    // broadcast incoming message to the client room or to everyone if yet to join
+    if (webSocket.room !== undefined) {
+      for (let client of this.rooms[webSocket.room]) {
+        client.send(`Broadcasting incoming message into room [${webSocket.room}]: ${data}`);
+      }
+    } else {
+      for (let client of <any>this.wss.clients) {
+        client.send(`Broadcasting incoming message to all client: ${data}`);
+      }
     }
   }
 
