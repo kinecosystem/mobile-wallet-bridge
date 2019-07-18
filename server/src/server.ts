@@ -39,23 +39,29 @@ export class WebSocketServer {
     };
   }
 
-  private onMessage(webSocket: WebSocket, data: WebSocket.Data): void {
-    console.log('[server](message): %s', JSON.stringify(data));
+  private switch(webSocket: WebSocket, data: Object) {
+    if (data['join'] !== undefined) {
+      this.joinRoom(webSocket, data['join']);
+    }
+  }
+
+  private onMessage(webSocket: WebSocket, data: string): void {
+    console.log('[server](message): %s', data);
     // broadcasting to every other connected WebSocket clients, excluding itself.
-    this.wss.clients.forEach((client) => {
+    for (let client of this.wss.clients) {
       if (client.readyState === WebSocket.OPEN) {
         client.send(`Broadcasting incoming message: ${data}`);
       }
-    });
+    }
 
-    // TODO: This is bad...
-    if (typeof data === 'string') {
-      try {
-        let jsonData = JSON.parse(data);
-        if (jsonData['join'] !== undefined) {
-          this.joinRoom(webSocket, jsonData['join']);
-        }
-      } catch { }
+    // parse data
+    try {
+      let jsonData = JSON.parse(data);
+      this.switch(webSocket, jsonData);
+    } catch (e) {
+      let err = `Unexpected message "${data}", Expecting a valid JSON`;
+      console.log(err + '\n' + e);
+      webSocket.send(err);
     }
   }
 
@@ -65,7 +71,7 @@ export class WebSocketServer {
   }
 
   private joinRoom(webSocket: WebSocket, roomName: string): void {
-    console.log(`Client joining Room:[${roomName}]`);
+    console.log(`Client joining Room: '${roomName}'`);
     let serverRoom = this.rooms[roomName];
     if (serverRoom !== undefined) {
       this.rooms[roomName].push(webSocket);
