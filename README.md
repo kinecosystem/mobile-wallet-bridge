@@ -11,7 +11,7 @@ npm run start
 ```
 
 ## Client
-- This is the part mimicks 3ed party like Medium or TapaTalk
+- This part mimicks 3ed party like Medium or TapaTalk
 ```
 cd client
 npm install
