@@ -1,7 +1,9 @@
 var path = require('path');
 
 module.exports = {
-  entry: './src/app.ts',
+  entry: [
+    './src/app.ts'
+  ],
   module: {
     rules: [{
       test: /\.tsx?$/,
@@ -13,7 +15,7 @@ module.exports = {
     extensions: ['.ts', '.js']
   },
   output: {
-    filename: './bundle.js',
+    filename: './[name].bundle.js',
     path: path.resolve(__dirname, 'js')
   }
 }

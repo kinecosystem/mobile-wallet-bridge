@@ -1,15 +1,14 @@
-import * as WebSocket from 'ws'
+import * as webSocket from 'ws'
 import * as express from 'express';
 import * as http from 'http';
 import * as net from 'net';
-import { User } from './model'
 
 export class WebSocketServer {
   public static readonly PORT: number = 8080;
   private app: express.Application;
   private server: http.Server;
-  private wss: WebSocket.Server;
-  private options: WebSocket.ServerOptions;
+  private wss: webSocket.Server;
+  private options: webSocket.ServerOptions;
   private rooms: Object;
 
   constructor() {
@@ -28,7 +27,7 @@ export class WebSocketServer {
   }
 
   private sockets(): void {
-    this.wss = new WebSocket.Server({ server: this.options.server });
+    this.wss = new webSocket.Server({ server: this.options.server });
     this.rooms = {};
   }
 
@@ -40,21 +39,33 @@ export class WebSocketServer {
   }
 
   private switch(webSocket: any, data: Object) {
-    if (data['join'] !== undefined) {
+    if ('join' in data) {
       this.joinRoom(webSocket, data['join']);
-      webSocket.room = data['join'];
+    } else if ('pay' in data) {
+
     }
+  }
+
+  private joinRoom(webSocket: webSocket, roomName: string): void {
+    console.log(`Client joining Room: '${roomName}'`);
+    let serverRoom = this.rooms[roomName];
+    if (serverRoom !== undefined) {
+      this.rooms[roomName].push(webSocket);
+    } else {
+      this.rooms[roomName] = [webSocket];
+    }
+
+    webSocket.send(JSON.stringify({ result: 'ok' }));
   }
 
   private onMessage(webSocket: any, data: string): void {
     console.log('[server](message): %s', data);
     // parse data
     try {
-      let jsonData = JSON.parse(data);
-      this.switch(webSocket, jsonData);
+      let msg = JSON.parse(data);
+      this.switch(webSocket, msg);
     } catch (e) {
       let err = `Unexpected message "${data}", Expecting a valid JSON`;
-      console.log(err + '\n' + e);
       webSocket.send(err);
     }
     // broadcast incoming message to the client room or to everyone if yet to join
@@ -69,27 +80,18 @@ export class WebSocketServer {
     }
   }
 
-  private onClose(webSocket: WebSocket, code: number, reason: string): void {
+  private onClose(webSocket: webSocket, code: number, reason: string): void {
     console.log('Disconnected client');
     // TODO: how to close?
   }
 
-  private joinRoom(webSocket: WebSocket, roomName: string): void {
-    console.log(`Client joining Room: '${roomName}'`);
-    let serverRoom = this.rooms[roomName];
-    if (serverRoom !== undefined) {
-      this.rooms[roomName].push(webSocket);
-    } else {
-      this.rooms[roomName] = [webSocket];
-    }
-    console.log(this.rooms);
-  }
 
-  private onConnection(webSocket: WebSocket | any, req: http.IncomingMessage): void {
+
+  private onConnection(webSocket: webSocket | any, req: http.IncomingMessage): void {
     console.log('Connected client - %s - on port %s.', req.connection.remoteAddress, this.options.port);
     webSocket.id = req.headers['sec-websocket-key'];
     webSocket.on('message', (msg: string) => this.onMessage(webSocket, msg));
-    webSocket.on('close', (webSocket: WebSocket, code: number, reason: string) => this.onClose(webSocket, code, reason));
+    webSocket.on('close', (webSocket: webSocket, code: number, reason: string) => this.onClose(webSocket, code, reason));
   }
 
   private onUpgrade(request: http.IncomingMessage, socket: net.Socket, upgradeHead: Buffer) {
@@ -100,11 +102,10 @@ export class WebSocketServer {
 
   private listen(): void {
     this.server.listen(this.options.port, () => {
-      console.log('Running HTTP Server on port %s', this.options.port);
-      console.log('Running WebSocket Server on port %s', this.options.port);
+      console.log('Running webSocket Server on port %s', this.options.port);
     });
     this.wss.on('upgrade', (request, socket, head) => { this.onUpgrade(request, socket, head) });
-    this.wss.on('connection', (webSocket: WebSocket, req: http.IncomingMessage) => this.onConnection(webSocket, req));
+    this.wss.on('connection', (webSocket: webSocket, req: http.IncomingMessage) => this.onConnection(webSocket, req));
   }
 
   public getApp(): express.Application {
