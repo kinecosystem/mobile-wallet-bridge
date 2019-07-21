@@ -2,6 +2,7 @@ import * as qrGenerator from 'qrcode';
 import * as queryString from 'query-string';
 import * as uuid from 'uuid/v4';
 
+
 const settings = {
   socket: {
     url: 'ws://localhost',
@@ -11,48 +12,53 @@ const settings = {
 
 const createBtn = $('#create');
 const joinRoomBtn = $('#join-room-id');
-const sendKinBtn = $('#send-ping');
+const sendPing = $('#send-ping');
 const qrContainer = $('#qr-code');
+const sendKinReqBtn = $('#send-pay-req');
 const joinRoomTxtField = <JQuery<HTMLInputElement>>$('#room-id');
 const parsedUrl = queryString.parse(location.hash);
 const socket = new WebSocket(`${settings.socket.url}:${settings.socket.port}`);
+const sendMessage = (msg: Object) => { socket.send(JSON.stringify(msg)); }
 
-joinRoomTxtField.val(parsedUrl['ruid'] || null);
-joinRoomBtn.click(e => {
-  e.preventDefault();
-  // TODO: export to function
-  socket.send(JSON.stringify({
-    "join": joinRoomTxtField
-  }));
+// disable links
+$('a').click(e => { e.preventDefault() });
+
+joinRoomBtn.click(_ => {
+  sendMessage({
+    "action": "join",
+    "data": {
+      room_id: joinRoomTxtField.val()
+    }
+  });
 });
 
-createBtn.click(e => {
-  e.preventDefault();
-  // TODO: Export function
-  const roomUUID = uuid();
+createBtn.click(_ => {
+  const room_id = uuid();
   const qrData = {
     'ws': socket.url,
-    'room': roomUUID
+    'room': room_id
   };
 
   qrGenerator.toCanvas(JSON.stringify(qrData), (err: any, canvas: HTMLCanvasElement) => {
     qrContainer.html(canvas);
-    // TODO: Export function
-    socket.send(JSON.stringify({
-      "join": roomUUID
-    }));
+    sendMessage({
+      "action": "join",
+      "data": {
+        room_id
+      }
+    });
   });
 
-  joinRoomTxtField.val(roomUUID);
+  joinRoomTxtField.val(room_id);
 });
 
 
-sendKinBtn.click(e => {
-  e.preventDefault();
-  // TODO: Export function
-  socket.send(JSON.stringify({
-    "message": "Wow!"
-  }));
+sendPing.click(_ => {
+  sendMessage({
+    "action": "message",
+    "data": "ping"
+  })
 });
 
 socket.onmessage = (ev: MessageEvent) => console.log(ev.data);
+

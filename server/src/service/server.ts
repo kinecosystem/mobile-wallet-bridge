@@ -2,6 +2,14 @@ import * as webSocket from 'ws'
 import * as express from 'express';
 import * as http from 'http';
 import * as net from 'net';
+import { UAParser } from 'ua-parser-js';
+
+export class Consts {
+  static readonly ACTION = "action";
+  static readonly DATA = "data";
+  static readonly JOIN = "join";
+  static readonly MAKE_PAYMENT = "make_payment";
+}
 
 export class WebSocketServer {
   public static readonly PORT: number = 8080;
@@ -38,45 +46,51 @@ export class WebSocketServer {
     };
   }
 
-  private switch(webSocket: any, data: Object) {
-    if ('join' in data) {
-      this.joinRoom(webSocket, data['join']);
-    } else if ('pay' in data) {
+  private switch(webSocket: any, msg: any) {
+    let act: { (webSocket: any, data: Object): void; };
+    switch (msg[Consts.ACTION]) {
+      case Consts.JOIN:
+        act = this.joinRoom;
+        break;
+      case Consts.MAKE_PAYMENT:
+        act = this.makePayment;
+        break;
+      default:
+        throw ('bad data');
+        break;
 
+        act(webSocket, msg[Consts.DATA])
     }
   }
 
-  private joinRoom(webSocket: webSocket, roomName: string): void {
-    console.log(`Client joining Room: '${roomName}'`);
-    let serverRoom = this.rooms[roomName];
-    if (serverRoom !== undefined) {
-      this.rooms[roomName].push(webSocket);
-    } else {
-      this.rooms[roomName] = [webSocket];
-    }
+  private makePayment(webSocket: any, data: Object): void {
+    console.log(`${webSocket.id} requested payment:'${JSON.stringify(data)}'`);
+    let mobileClient = this.rooms[webSocket.room].filter((client: WebSocket) => { return client !== webSocket })[0]
+    console.log(mobileClient);
+  }
 
-    webSocket.send(JSON.stringify({ result: 'ok' }));
+  private joinRoom(webSocket: any, data: Object): void {
+    console.log(`${webSocket.id} joined room id:'${data['room_id']}'`);
+    let room_id = data['room_id'];
+    let serverRoom = this.rooms[room_id];
+    if (serverRoom !== undefined) {
+      this.rooms[room_id].push(webSocket);
+    } else {
+      this.rooms[room_id] = [webSocket];
+    }
+    webSocket.room = room_id;
+    webSocket.sendJSON({ "result": "ok" });
   }
 
   private onMessage(webSocket: any, data: string): void {
-    console.log('[server](message): %s', data);
-    // parse data
+    console.log('[server] incoming message: %s', data);
     try {
       let msg = JSON.parse(data);
+      if (msg[Consts.ACTION] === undefined) throw ('missing action');
       this.switch(webSocket, msg);
     } catch (e) {
-      let err = `Unexpected message "${data}", Expecting a valid JSON`;
-      webSocket.send(err);
-    }
-    // broadcast incoming message to the client room or to everyone if yet to join
-    if (webSocket.room !== undefined) {
-      for (let client of this.rooms[webSocket.room]) {
-        client.send(`Broadcasting incoming message into room [${webSocket.room}]: ${data}`);
-      }
-    } else {
-      for (let client of <any>this.wss.clients) {
-        client.send(`Broadcasting incoming message to all client: ${data}`);
-      }
+      console.log(e);
+      webSocket.sendJSON({ error: `Unexpected message "${data}", Expecting a valid JSON` });
     }
   }
 
@@ -85,11 +99,13 @@ export class WebSocketServer {
     // TODO: how to close?
   }
 
-
-
   private onConnection(webSocket: webSocket | any, req: http.IncomingMessage): void {
     console.log('Connected client - %s - on port %s.', req.connection.remoteAddress, this.options.port);
+
     webSocket.id = req.headers['sec-websocket-key'];
+    webSocket.info = new UAParser(req.headers['user-agent']);
+    webSocket.sendJSON = (msg: Object) => { webSocket.send(JSON.stringify(msg)) }
+
     webSocket.on('message', (msg: string) => this.onMessage(webSocket, msg));
     webSocket.on('close', (webSocket: webSocket, code: number, reason: string) => this.onClose(webSocket, code, reason));
   }
