@@ -90,3 +90,5 @@ typings/
 \.DS_Store
 
 server/dist/
+
+client/js/
