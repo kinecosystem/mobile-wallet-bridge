@@ -15,7 +15,7 @@ export class Room {
   }
 
   public push(client: webSocket): void {
-    if (this.clients.length < 2)
+    if (this.clients.length < this.MAX_ROOM_SIZE)
       this.clients.push(client)
     else
       throw (`room ${this.id} is full. can't add more clients`);

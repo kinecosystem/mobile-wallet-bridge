@@ -16,7 +16,7 @@ export class Message {
 
     static Actions = class {
       static readonly PING = "ping"
-      static readonly PONG = "PONG"
+      static readonly PONG = "pong"
       static readonly JOIN = "join";
       static readonly MAKE_PAYMENT = "make_payment";
       static readonly JOIN_RESULT = "join_result";
