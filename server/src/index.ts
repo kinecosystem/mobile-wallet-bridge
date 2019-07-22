@@ -1,4 +1,5 @@
-import { WebSocketServer } from './service/server';
+import { server } from './dependencies';
 
-let app = new WebSocketServer().getApp();
+const app: any = server.getApp();
+
 export { app };
