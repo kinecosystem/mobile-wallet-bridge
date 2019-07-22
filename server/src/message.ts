@@ -96,11 +96,10 @@ class MakePaymentMessage extends Message {
 
   public doAction(socket: WebSocket, ...args: any): void {
     const rooms = repository.getRooms();
-    console.log(rooms);
     console.log(`${(socket as any).id} requested payment:'${JSON.stringify(this.data)}'`);
-    let clientRoom = rooms.filter(room => room.id == (socket as any).id)[0]
-    let mobileClient = clientRoom.clients.filter(client => (client as any).id != (socket as any).id)[0]
-
-    server.sendToSocket(mobileClient, this)
+    let clientRoom = rooms.filter(room => room.id == (socket as any).room)[0]
+    let mobileClient = clientRoom.clients.filter(client => (client as any) !== (socket as any))[0]
+    server.sendToSocket(mobileClient, this);
+    server.sendToSocket(socket, new Message(Message.Consts.Actions.MAKE_PAYMENT, { "status": "ok" }));
   }
 }

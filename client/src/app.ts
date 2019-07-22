@@ -19,8 +19,8 @@ export class Message {
 
 const settings = {
   socket: {
-    url: 'ws://0.tcp.ngrok.io',
-    port: 12274
+    url: 'ws://localhost',
+    port: 8080
   }
 };
 
@@ -37,9 +37,7 @@ const sendMessage = (msg: Message) => { socket.send(msg.toString()); }
 $('a').click(e => { e.preventDefault() });
 
 sendKinReqBtn.click(_ => {
-  let msg = new Message("make_payment", {
-    "data": { "amount": 50, "request_id": uuid(), "public_address": "GAVIE7DPX3M2OOW3XBL2R5V5NHCVUJMHV6WSJVMNYK6YN4IB2GWRKYRQ" }
-  })
+  let msg = new Message("make_payment", { "amount": 50, "request_id": uuid(), "public_address": "GAVIE7DPX3M2OOW3XBL2R5V5NHCVUJMHV6WSJVMNYK6YN4IB2GWRKYRQ" })
   sendMessage(msg);
 })
 
