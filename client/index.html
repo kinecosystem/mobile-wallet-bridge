@@ -13,18 +13,21 @@
 <body>
   <!-- Begin page content -->
   <main>
-    <section class="jumbotron text-center">
+    <section class="jumbotron">
       <div class="container">
         <h1 class="jumbotron-heading">Tip With Kin Example</h1>
         <p class="lead text-muted">Imagin this is Medium or TapTalk</p>
         <p>
           <a href="#" class="btn btn-success" id="create">Create Random Room</a>
-          <a href="#" class="btn btn-success" id="send-ping">Send Ping</a>
         </p>
         <p>
           <a href="#" class="btn btn-success" id="join-room-id">Connect Specific Room</a>
+          <input type="text" id="room-id">
         </p>
-        <input type="text" id="room-id">
+        <p>
+          <a href="#" class="btn btn-success" id="send-ping">Send Ping</a>
+          <a href="#" class="btn btn-success" id="send-pay-req">Send Pay Request (1Kin)</a>
+        </p>
       </div>
     </section>
     <section>
@@ -34,9 +37,9 @@
       </div>
     </section>
   </main>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.dev.js"
-    integrity="sha256-i2Orhi397HWPn93rsCUTW8HBoso65vY/VNTllm9Kuqo=" crossorigin="anonymous"></script>
-  <script src="./js/bundle.js"></script>
+  <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="./js/main.bundle.js"></script>
 </body>
 
 </html>
