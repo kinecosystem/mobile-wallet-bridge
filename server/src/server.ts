@@ -90,7 +90,7 @@ export class WebSocketServer {
       msg.doAction(socket);
     } catch (e) {
       console.log(e);
-      this.sendToSocket(socket, new Message("error", { 'e': `Unexpected message ${data}, Expecting a valid JSON` }));
+      this.sendToSocket(socket, new Message("error", { 'e': `Unexpected message ${e}; Expecting a valid JSON` }));
     }
   }
 }
