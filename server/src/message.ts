@@ -74,13 +74,12 @@ class JoinAction extends Message {
     let room_id = this.data['room_id'];
     if (rooms.some(room => room.id === room_id)) {
       // room existing, add client
-      let room = rooms.filter(room => room.id === room_id)[0];
-      room.push(socket);
+      repository.pushToRoom(socket, room_id);
     } else {
       // create room, add the client and push to array
       let newRoom = new Room(room_id);
       newRoom.clients.push(socket);
-      rooms.push(newRoom);
+      repository.pushRoom(newRoom);
     }
     console.log(`${(socket as any).id} joined room id:'${this.data['room_id']}'`);
     (socket as any).room = room_id;
