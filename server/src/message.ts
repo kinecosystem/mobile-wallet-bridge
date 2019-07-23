@@ -47,11 +47,31 @@ export class Message {
       case Message.Strings.Actions.PING:
         return new PingAction(data);
         break;
+      case Message.Strings.Actions.PAYMENT_REQUEST:
+        return new PaymentRequestAction(data);
+        break;
       default:
         throw (Message.Strings.BAD_TYPE)
     }
   }
   public doAction(socket: WebSocket, ...args: any): void { }
+}
+
+export class PaymentRequestAction extends Message {
+  constructor(_data?: Object) {
+    super(Message.Strings.Actions.PAYMENT_REQUEST, _data)
+  }
+
+  public doAction(socket: AugWebSocket, ...args: any): void {
+    console.log(`Got payment receipt from ${socket.id}:'${JSON.stringify(this.data)}'`);
+    if (socket !== socket.room.slave) {
+      console.log('something is fishy here') // TODO: some better logging
+    }
+    let socketRoom = socket.room;
+    let masterClient = socketRoom.master;
+    server.sendToSocket(masterClient, this);
+    server.sendToSocket(socket, new Message(Message.Strings.Actions.MAKE_PAYMENT, { "status": "ok" }));
+  }
 }
 
 export class PingAction extends Message {
@@ -89,10 +109,14 @@ export class JoinAction extends Message {
     if (rooms.some(room => room.id === room_id)) {
       // if room exits, the second to connect to it is the salve - i.e wallet provider
       let room = rooms.filter(room => room.id === room_id)[0];
-      if (room.slave === undefined)
+      if (room.slave === undefined) {
+        socket.room = room;
         room.slave = socket;
-      else
+        console.log(repository.getRooms());
+      }
+      else {
         console.log(`${room_id} already has a slave client:'${room.slave.id}'`);
+      }
     } else {
       // create room, add the client and push to array
       let newRoom = new Room(room_id, socket);
@@ -114,8 +138,8 @@ export class MakePaymentMessage extends Message {
   // Forwords the message to Slave - wallet provider
   public doAction(socket: AugWebSocket, ...args: any): void {
     console.log(`${socket.id} requested payment:'${JSON.stringify(this.data)}'`);
-    let clientRoom = socket.room // FIXME: could be null and without a room.
-    let walletProvider = clientRoom.slave; // FIXME: could be null
+    let socketRoom = socket.room // FIXME: could be null and without a room.
+    let walletProvider = socketRoom.slave; // FIXME: could be null
     server.sendToSocket(walletProvider, this);
     server.sendToSocket(socket, new Message(Message.Strings.Actions.MAKE_PAYMENT, { "status": "ok" }));
   }
