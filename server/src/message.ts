@@ -1,4 +1,5 @@
-import * as WebSocket from 'ws'
+import AugWebSocket from '../types/ws'
+import WebSocket from 'ws'
 import { Room } from './room'
 import { repository, server } from './dependencies'
 
@@ -6,7 +7,7 @@ export class Message {
   action: string
   data: Object
 
-  static Consts = class {
+  static Strings = class {
     static BAD_TYPE = 'bad type';
 
     static Fields = class {
@@ -15,11 +16,12 @@ export class Message {
     }
 
     static Actions = class {
+      static readonly MSG = "message"
       static readonly PING = "ping"
       static readonly PONG = "pong"
-      static readonly JOIN = "join";
-      static readonly MAKE_PAYMENT = "make_payment";
-      static readonly JOIN_RESULT = "join_result";
+      static readonly JOIN = "join"
+      static readonly MAKE_PAYMENT = "make_payment"
+      static readonly JOIN_RESULT = "join_result"
     }
   }
 
@@ -33,73 +35,83 @@ export class Message {
   }
 
   static fromJson(obj: Object) {
-    const data = obj[Message.Consts.Fields.DATA];
-    switch (obj[Message.Consts.Fields.ACTION]) {
-      case Message.Consts.Actions.JOIN:
+    const data = obj[Message.Strings.Fields.DATA];
+    switch (obj[Message.Strings.Fields.ACTION]) {
+      case Message.Strings.Actions.JOIN:
         return new JoinAction(data);
         break;
-      case Message.Consts.Actions.MAKE_PAYMENT:
+      case Message.Strings.Actions.MAKE_PAYMENT:
         return new MakePaymentMessage(data);
         break;
-      case Message.Consts.Actions.PING:
+      case Message.Strings.Actions.PING:
         return new PingAction(data);
         break;
       default:
-        throw (Message.Consts.BAD_TYPE)
+        throw (Message.Strings.BAD_TYPE)
     }
   }
   public doAction(socket: WebSocket, ...args: any): void { }
 }
 
-class PingAction extends Message {
+export class PingAction extends Message {
   constructor(_data?: Object) {
-    super(Message.Consts.Actions.PING, _data)
+    super(Message.Strings.Actions.PING, _data)
   }
 
   public doAction(socket: WebSocket, ...args: any): void {
-    let msg = new Message(Message.Consts.Actions.PONG, { status: 'ok' })
+    let msg = new Message(Message.Strings.Actions.PONG, { status: 'ok' })
     server.sendToSocket(socket, msg);
   }
 }
 
-class JoinAction extends Message {
+export class JoinAction extends Message {
 
   constructor(_data?: Object) {
-    super(Message.Consts.Actions.JOIN, _data)
+    super(Message.Strings.Actions.JOIN, _data)
   }
 
-  public doAction(socket: WebSocket, ...args: any): void {
+  public doAction(socket: AugWebSocket, ...args: any): void {
+    if ((socket as any).room !== undefined) {
+      let msg = new Message(Message.Strings.Actions.MSG, { error: `already in room: ${(socket as any).room.id}` })
+      server.sendToSocket(socket, msg);
+      return null;
+    }
+
     // create the room if not existing
     const rooms = repository.getRooms();
     let room_id = this.data['room_id'];
+    // check if a room with ID exists
     if (rooms.some(room => room.id === room_id)) {
-      // room existing, add client
-      repository.pushToRoom(socket, room_id);
+      // if room exits, the second to connect to it is the salve - i.e wallet provider
+      let room = rooms.filter(room => room.id === room_id)[0];
+      if (room.slave !== undefined)
+        room.slave = socket;
+      else
+        console.log(`${room_id} already has a slave client:'${room.slave.id}'`);
     } else {
       // create room, add the client and push to array
-      let newRoom = new Room(room_id);
-      newRoom.clients.push(socket);
+      let newRoom = new Room(room_id, socket);
+      socket.room = newRoom;
       repository.pushRoom(newRoom);
     }
-    console.log(`${(socket as any).id} joined room id:'${this.data['room_id']}'`);
-    (socket as any).room = room_id;
+    console.log(`${(socket as any).id} joined room id:'${room_id}'`);
 
-    let msg = new Message(Message.Consts.Actions.JOIN_RESULT, { room_id: room_id, status: 'ok' })
+    let msg = new Message(Message.Strings.Actions.JOIN_RESULT, { room_id, status: 'ok' })
     server.sendToSocket(socket, msg);
   }
 }
 
-class MakePaymentMessage extends Message {
+export class MakePaymentMessage extends Message {
   constructor(_data?: Object) {
-    super(Message.Consts.Actions.MAKE_PAYMENT, _data)
+    super(Message.Strings.Actions.MAKE_PAYMENT, _data)
   }
 
-  public doAction(socket: WebSocket, ...args: any): void {
-    const rooms = repository.getRooms();
+  // Forwords the message to Slave - wallet provider
+  public doAction(socket: AugWebSocket, ...args: any): void {
     console.log(`${(socket as any).id} requested payment:'${JSON.stringify(this.data)}'`);
-    let clientRoom = rooms.filter(room => room.id == (socket as any).room)[0]
-    let mobileClient = clientRoom.clients.filter(client => (client as any) !== (socket as any))[0]
-    server.sendToSocket(mobileClient, this);
-    server.sendToSocket(socket, new Message(Message.Consts.Actions.MAKE_PAYMENT, { "status": "ok" }));
+    let clientRoom = socket.room // FIXME: could be null and without a room.
+    let walletProvider = clientRoom.slave; // FIXME: could be null
+    server.sendToSocket(walletProvider, this);
+    server.sendToSocket(socket, new Message(Message.Strings.Actions.MAKE_PAYMENT, { "status": "ok" }));
   }
 }

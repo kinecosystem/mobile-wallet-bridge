@@ -5,6 +5,7 @@
     "target": "ES6",
     "module": "commonjs",
     "lib": ["dom", "es2017"],
+    "typeRoots": ["node_modules/@types", "types"],
     "sourceMap": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true

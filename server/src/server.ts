@@ -1,7 +1,8 @@
-import * as WebSocket from 'ws'
-import * as express from 'express';
-import * as http from 'http';
-import * as net from 'net';
+import AugWebSocket from '../types/ws'
+import WebSocket from 'ws'
+import express from 'express';
+import http from 'http';
+import net from 'net';
 import { Message } from './message';
 
 export class WebSocketServer {
@@ -38,10 +39,10 @@ export class WebSocketServer {
   }
 
   // Main socket handler
-  private onConnection(socket: WebSocket, req: http.IncomingMessage): void {
+  private onConnection(socket: AugWebSocket, req: http.IncomingMessage): void {
     console.log('New client connected %s`', req.headers['sec-websocket-key']);
     // store socket id for future identification
-    (socket as any).id = req.headers['sec-websocket-key'];
+    socket.id = req.headers['sec-websocket-key'].toString();
     // handle incoming messages
     socket.on('message', (msg: string) => { this.onMessage(socket, msg) });
     socket.on('close', (socket: WebSocket, code: number, reason: string) => { this.onClose(socket, code, reason) });

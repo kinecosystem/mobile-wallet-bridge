@@ -1,24 +1,11 @@
-import * as webSocket from 'ws'
-
+import AugWebSocket from '../types/ws'
 export class Room {
-  id: string
-  clients: Array<webSocket>
+  public id: string
+  public master: AugWebSocket // the broweser, using the slave for wallet ops
+  public slave?: AugWebSocket // the wallet provider, acting on behalf of the client
 
-  // no more than MAX_ROOM_SIZE are allowed in a room
-  // TODO: Validate a mobile and a browser are connected
-  // TODO: How secure is that?
-  public readonly MAX_ROOM_SIZE = 2;
-
-  constructor(_id: string) {
+  constructor(_id: string, _master: AugWebSocket) {
     this.id = _id;
-    this.clients = new Array<webSocket>();
+    this.master = _master;
   }
-
-  public push(client: webSocket): void {
-    if (this.clients.length < this.MAX_ROOM_SIZE)
-      this.clients.push(client)
-    else
-      throw (`room ${this.id} is full. can't add more clients`);
-  }
-
 }
