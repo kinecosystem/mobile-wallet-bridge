@@ -22,6 +22,7 @@ export class Message {
       static readonly JOIN = "join"
       static readonly MAKE_PAYMENT = "make_payment"
       static readonly JOIN_RESULT = "join_result"
+      static readonly PAYMENT_REQUEST = "payment_receipt"
     }
   }
 
@@ -71,8 +72,8 @@ export class JoinAction extends Message {
   }
 
   public doAction(socket: AugWebSocket, ...args: any): void {
-    if ((socket as any).room !== undefined) {
-      let msg = new Message(Message.Strings.Actions.MSG, { error: `already in room: ${(socket as any).room.id}` })
+    if (socket.room !== undefined) {
+      let msg = new Message(Message.Strings.Actions.MSG, { error: `already in room: ${socket.room.id}` })
       server.sendToSocket(socket, msg);
       return null;
     }
@@ -80,11 +81,15 @@ export class JoinAction extends Message {
     // create the room if not existing
     const rooms = repository.getRooms();
     let room_id = this.data['room_id'];
+    if (room_id === undefined) {
+      console.log('bad data, missing room id');
+      return null;
+    }
     // check if a room with ID exists
     if (rooms.some(room => room.id === room_id)) {
       // if room exits, the second to connect to it is the salve - i.e wallet provider
       let room = rooms.filter(room => room.id === room_id)[0];
-      if (room.slave !== undefined)
+      if (room.slave === undefined)
         room.slave = socket;
       else
         console.log(`${room_id} already has a slave client:'${room.slave.id}'`);
@@ -94,7 +99,7 @@ export class JoinAction extends Message {
       socket.room = newRoom;
       repository.pushRoom(newRoom);
     }
-    console.log(`${(socket as any).id} joined room id:'${room_id}'`);
+    console.log(`${socket.id} joined room id:'${room_id}'`);
 
     let msg = new Message(Message.Strings.Actions.JOIN_RESULT, { room_id, status: 'ok' })
     server.sendToSocket(socket, msg);
@@ -108,7 +113,7 @@ export class MakePaymentMessage extends Message {
 
   // Forwords the message to Slave - wallet provider
   public doAction(socket: AugWebSocket, ...args: any): void {
-    console.log(`${(socket as any).id} requested payment:'${JSON.stringify(this.data)}'`);
+    console.log(`${socket.id} requested payment:'${JSON.stringify(this.data)}'`);
     let clientRoom = socket.room // FIXME: could be null and without a room.
     let walletProvider = clientRoom.slave; // FIXME: could be null
     server.sendToSocket(walletProvider, this);

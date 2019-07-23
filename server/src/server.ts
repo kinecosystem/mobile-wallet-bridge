@@ -1,8 +1,8 @@
 import AugWebSocket from '../types/ws'
-import WebSocket from 'ws'
-import express from 'express';
-import http from 'http';
-import net from 'net';
+import * as  WebSocket from 'ws'
+import * as  express from 'express';
+import * as http from 'http';
+import * as net from 'net';
 import { Message } from './message';
 
 export class WebSocketServer {
@@ -83,8 +83,8 @@ export class WebSocketServer {
   }
 
   // handle incoming massages
-  private onMessage(socket: WebSocket, data: string): void {
-    console.log('Incoming message from `%s` : `%s`', (socket as any).id, data);
+  private onMessage(socket: AugWebSocket, data: string): void {
+    console.log('Incoming message from `%s` : `%s`', socket.id, data);
     // Don't crash the server if message is not json
     try {
       let msg: Message = Message.fromJson(JSON.parse(data));
