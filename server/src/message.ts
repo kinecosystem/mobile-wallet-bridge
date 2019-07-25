@@ -17,8 +17,6 @@ export class Message {
 
     static Actions = class {
       static readonly MSG = "message"
-      static readonly PING = "ping"
-      static readonly PONG = "pong"
       static readonly JOIN = "join"
       static readonly MAKE_PAYMENT = "make_payment"
       static readonly JOIN_RESULT = "join_result"
@@ -44,9 +42,6 @@ export class Message {
       case Message.Strings.Actions.MAKE_PAYMENT:
         return new MakePaymentMessage(data);
         break;
-      case Message.Strings.Actions.PING:
-        return new PingAction(data);
-        break;
       case Message.Strings.Actions.PAYMENT_REQUEST:
         return new PaymentRequestAction(data);
         break;
@@ -71,17 +66,6 @@ export class PaymentRequestAction extends Message {
     let masterClient = socketRoom.master;
     server.sendToSocket(masterClient, this);
     server.sendToSocket(socket, new Message(Message.Strings.Actions.MAKE_PAYMENT, { "status": "ok" }));
-  }
-}
-
-export class PingAction extends Message {
-  constructor(_data?: Object) {
-    super(Message.Strings.Actions.PING, _data)
-  }
-
-  public doAction(socket: WebSocket, ...args: any): void {
-    let msg = new Message(Message.Strings.Actions.PONG, { status: 'ok' })
-    server.sendToSocket(socket, msg);
   }
 }
 
@@ -112,7 +96,8 @@ export class JoinAction extends Message {
       if (room.slave === undefined) {
         socket.room = room;
         room.slave = socket;
-        console.log(repository.getRooms());
+        let msg = new Message(Message.Strings.Actions.MSG, { "text": "slave connected" });
+        server.sendToSocket(room.master, msg);
       }
       else {
         console.log(`${room_id} already has a slave client:'${room.slave.id}'`);

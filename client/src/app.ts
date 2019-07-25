@@ -24,29 +24,21 @@ const settings = {
   }
 };
 
-const createBtn = $('#create');
-const joinRoomBtn = $('#join-room-id');
-const sendPing = $('#send-ping');
-const qrContainer = $('#qr-code');
+const createBtn = $('#create-room');
 const sendKinReqBtn = $('#send-pay-req');
-const joinRoomTxtField = <JQuery<HTMLInputElement>>$('#room-id');
+const qrHolders = $('#qr-modal-body');
+const socketOpenedMsg = $('#socket-opened-msg');
+const slaveConnectedMsg = $('#slave-connected-msg');
+const roomCreatedMsg = $('#room-created-msg');
+const qrModal = $('#qr-modal');
 const socket = new WebSocket(`${settings.socket.url}:${settings.socket.port}`);
-const sendMessage = (msg: Message) => { socket.send(msg.toString()); }
 
-// disable links
-$('a').click(e => { e.preventDefault() });
+const sendMessage = (msg: Message) => { socket.send(msg.toString()); }
 
 sendKinReqBtn.click(_ => {
   let msg = new Message("make_payment", { "amount": 50, "request_id": uuid(), "public_address": "GAVIE7DPX3M2OOW3XBL2R5V5NHCVUJMHV6WSJVMNYK6YN4IB2GWRKYRQ" })
   sendMessage(msg);
 })
-
-joinRoomBtn.click(_ => {
-  let msg = new Message("join", {
-    room_id: joinRoomTxtField.val()
-  })
-  sendMessage(msg);
-});
 
 createBtn.click(_ => {
   const room_id = uuid();
@@ -56,23 +48,34 @@ createBtn.click(_ => {
   };
 
   qrGenerator.toCanvas(JSON.stringify(qrData), (err: any, canvas: HTMLCanvasElement) => {
-    qrContainer.html(canvas);
+    qrHolders.html(canvas);
     let msg = new Message("join", {
       room_id: room_id
     });
     sendMessage(msg);
   });
-
-  joinRoomTxtField.val(room_id);
 });
 
+socket.onopen = (ev: Event) => {
+  console.log(ev)
+  socketOpenedMsg.show();
+}
 
-sendPing.click(_ => {
-  let msg = new Message("ping", {
-    "text": "ping!"
-  })
-  sendMessage(msg);
-});
+socket.onmessage = (ev: MessageEvent) => {
+  const msg = JSON.parse(ev.data);
+  console.log(msg)
 
-socket.onmessage = (ev: MessageEvent) => console.log(ev.data);
+  switch (msg.action) {
+    case "join_result":
+      if (msg.data.status == "ok")
+        roomCreatedMsg.show();
+      break;
+    case "message":
+      if (msg.data.text == "slave connected") {
+        slaveConnectedMsg.show();
+        (qrModal as any).modal('toggle');
+      }
+
+  }
+};
 
