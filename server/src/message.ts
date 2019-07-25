@@ -65,7 +65,6 @@ export class PaymentRequestAction extends Message {
     let socketRoom = socket.room;
     let masterClient = socketRoom.master;
     server.sendToSocket(masterClient, this);
-    server.sendToSocket(socket, new Message(Message.Strings.Actions.MAKE_PAYMENT, { "status": "ok" }));
   }
 }
 
