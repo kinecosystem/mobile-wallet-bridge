@@ -20,7 +20,7 @@ export class Message {
       static readonly JOIN = "join"
       static readonly MAKE_PAYMENT = "make_payment"
       static readonly JOIN_RESULT = "join_result"
-      static readonly PAYMENT_REQUEST = "payment_receipt"
+      static readonly PAYMENT_RECEIPT = "payment_receipt"
     }
   }
 
@@ -42,7 +42,7 @@ export class Message {
       case Message.Strings.Actions.MAKE_PAYMENT:
         return new MakePaymentMessage(data);
         break;
-      case Message.Strings.Actions.PAYMENT_REQUEST:
+      case Message.Strings.Actions.PAYMENT_RECEIPT:
         return new PaymentRequestAction(data);
         break;
       default:
@@ -54,7 +54,7 @@ export class Message {
 
 export class PaymentRequestAction extends Message {
   constructor(_data?: Object) {
-    super(Message.Strings.Actions.PAYMENT_REQUEST, _data)
+    super(Message.Strings.Actions.PAYMENT_RECEIPT, _data)
   }
 
   public doAction(socket: AugWebSocket, ...args: any): void {
